@@ -12,16 +12,20 @@ import {
   Icon,
   List,
   Input,
+  Dropdown,
 } from "semantic-ui-react";
 import Startbar from "./Startbar";
 import { Types, AptosClient, BCS } from "aptos";
 var Buffer = require("buffer/").Buffer;
 
-const client = new AptosClient("https://fullnode.devnet.aptoslabs.com");
-
 function App() {
   // Retrieve aptos.account on initial render and store it.
-  const n = 4;
+  const n = 10;
+  const networkOptions = [
+    {key: 'Devnet', value: 'https://fullnode.devnet.aptoslabs.com/v1', text: 'Devnet'},
+    {key: 'Testnet', value: 'https://fullnode.testnet.aptoslabs.com/v1', text: 'Testnet'},
+    {key: 'Mainnet', value: 'https://fullnode.mainnet.aptoslabs.com/v1', text: 'Mainnet'}
+  ]
 
   const [moduleDetails, setModuleDetails] = useState({
     address: "",
@@ -47,6 +51,9 @@ function App() {
     result: false,
     message: "",
   });
+  const [network, setNetwork] = useState<string>(
+    "https://fullnode.devnet.aptoslabs.com"
+  );
   const [typeArgument, setTypeArguments] = useState(
     Array(n).fill(Array(n).fill(""))
   );
@@ -69,6 +76,15 @@ function App() {
     }
   };
 
+  const handleNetworkChange = (e: any, data: any) => {
+    setNetwork(data.value);
+    setModuleFetchStatus({
+      status: false,
+      result: false,
+      message: ""
+    })
+  }
+
   const handleChange = (e: any) => {
     setModuleDetails({
       ...moduleDetails,
@@ -79,6 +95,7 @@ function App() {
   const handleModuleDetailsSubmit = async (e: any) => {
     e.preventDefault();
     setModuleFetchLoading(true);
+    const client = new AptosClient(network);
     try {
       const moduleABI = await client.getAccountModule(
         moduleDetails.address,
@@ -125,6 +142,7 @@ function App() {
     paramIndex: number,
     e: any
   ) => {
+    console.log(e.target.value);
     let copy = [...typeArgument];
     copy[functionIndex][paramIndex] = e.target.value;
     setTypeArguments(copy);
@@ -135,6 +153,7 @@ function App() {
     functionName: string
   ) => {
     setTransactionLoading(true);
+    const client = new AptosClient(network);
     console.log(transactionArgument[functionIndex]);
     const localArguments = transactionArgument[functionIndex].filter(
       (args: any) => {
@@ -199,6 +218,15 @@ function App() {
             <p>Not Connected</p>
           )}
           <Form>
+            <Dropdown
+              placeholder="Select Network"
+              defaultValue="https://fullnode.devnet.aptoslabs.com/v1"
+              selection
+              options={networkOptions}
+              onChange={handleNetworkChange}
+            />
+            <br />
+            <br />
             <Form.Field>
               <label>Module Address</label>
               <input
@@ -269,10 +297,8 @@ function App() {
                       <Accordion.Content
                         active={activeFunctionsIndex === index}
                       >
-                        {moduleABI.exposed_functions[index].params
-                          .length > 0 && (
-                          <Header as="h5">Transaction Arguments</Header>
-                        )}
+                        {moduleABI.exposed_functions[index].params.length >
+                          0 && <Header as="h5">Transaction Arguments</Header>}
                         <List unordered>
                           {moduleABI.exposed_functions[index].params.map(
                             (params, paramIndex) => {
