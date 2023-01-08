@@ -21,6 +21,7 @@ const client = new AptosClient("https://fullnode.devnet.aptoslabs.com");
 
 function App() {
   // Retrieve aptos.account on initial render and store it.
+  const n = 4;
 
   const [moduleDetails, setModuleDetails] = useState({
     address: "",
@@ -37,6 +38,7 @@ function App() {
   const [moduleFetchLoading, setModuleFetchLoading] = useState<boolean>(false);
   const [moduleABI, setModuleABI] = useState<Types.MoveModule>();
   const [activeFunctionsIndex, setActiveFunctionsIndex] = useState<number>(-1);
+  const [transactionArgument, setTransactionArguments] = useState(Array(n).fill(Array(n).fill("")));
 
   React.useEffect(() => {
     connectToWallet();
@@ -96,6 +98,16 @@ function App() {
       ? setActiveFunctionsIndex(-1)
       : setActiveFunctionsIndex(index);
   };
+
+  const handleTransactionArguments = (functionIndex: number, paramIndex: number, e: any) => {
+    let copy = [...transactionArgument];
+    copy[functionIndex][paramIndex] = e.target.value;
+    setTransactionArguments(copy);
+  }
+
+  const executeTransaction = (functionIndex: number) => {
+    
+  }
 
   return (
     <div>
@@ -167,25 +179,25 @@ function App() {
                         onClick={handleFunctionsAccordion}
                       >
                         <Icon name="dropdown" />
-                        {func.name}
+                        <b>{func.name}</b>
                       </Accordion.Title>
                       <Accordion.Content
                         active={activeFunctionsIndex === index}
                       >
                         <List unordered>
                           {moduleABI.exposed_functions[index].params.map(
-                            (params, index) => {
+                            (params, paramIndex) => {
                               if (params !== "&signer")
                                 return (
                                   <List.Item>
                                     {/* <Button content={params} /> */}
-                                    <Input label={params} placeholder={params} />
+                                    <Input label={params} placeholder={params} onChange={(e) => handleTransactionArguments(index, paramIndex, e)} value={transactionArgument[index][paramIndex]} />
                                   </List.Item>
                                 );
                             }
                           )}
                         </List>
-                        <Button secondary>Execute</Button>
+                        <Button secondary onClick={() => executeTransaction(index)}>Execute</Button>
                       </Accordion.Content>
                     </Accordion>
                   );
