@@ -38,7 +38,15 @@ function App() {
   const [moduleFetchLoading, setModuleFetchLoading] = useState<boolean>(false);
   const [moduleABI, setModuleABI] = useState<Types.MoveModule>();
   const [activeFunctionsIndex, setActiveFunctionsIndex] = useState<number>(-1);
-  const [transactionArgument, setTransactionArguments] = useState(Array(n).fill(Array(n).fill("")));
+  const [transactionArgument, setTransactionArguments] = useState(
+    Array(n).fill(Array(n).fill(""))
+  );
+  const [transactionLoading, setTransactionLoading] = useState<boolean>(false);
+  const [transactionStatus, setTransactionStatus] = useState({
+    status: false,
+    result: false,
+    message: "",
+  });
 
   React.useEffect(() => {
     connectToWallet();
@@ -99,15 +107,60 @@ function App() {
       : setActiveFunctionsIndex(index);
   };
 
-  const handleTransactionArguments = (functionIndex: number, paramIndex: number, e: any) => {
+  const handleTransactionArguments = (
+    functionIndex: number,
+    paramIndex: number,
+    e: any
+  ) => {
     let copy = [...transactionArgument];
     copy[functionIndex][paramIndex] = e.target.value;
     setTransactionArguments(copy);
-  }
+  };
 
-  const executeTransaction = (functionIndex: number) => {
-    
-  }
+  const executeTransaction = async (
+    functionIndex: number,
+    functionName: string
+  ) => {
+    setTransactionLoading(true);
+    console.log(transactionArgument[functionIndex]);
+    const localArguments = transactionArgument[functionIndex].filter(
+      (args: any) => {
+        return args !== "";
+      }
+    );
+    console.log(localArguments);
+    const payload = {
+      arguments: localArguments,
+      function: `${moduleDetails.address}::${moduleDetails.name}::${functionName}`,
+      type: "entry_function_payload",
+      type_arguments: [],
+    };
+    try {
+      const pendingTransaction = await (
+        window as any
+      ).aptos.signAndSubmitTransaction(payload);
+
+      // In most cases a dApp will want to wait for the transaction, in these cases you can use the typescript sdk
+      const txn = await client.waitForTransactionWithResult(
+        pendingTransaction.hash
+      );
+      console.log(txn);
+      console.log(txn.hash, txn.type)
+      setTransactionStatus({
+        status: true,
+        result: true,
+        message: "The transaction went through successfully",
+      });
+    } catch (error) {
+      console.log(error);
+      setTransactionStatus({
+        status: true,
+        result: false,
+        message: (error as Error).message,
+      });
+    }
+    setTransactionLoading(false);
+  };
 
   return (
     <div>
@@ -158,13 +211,27 @@ function App() {
               </Button>
             )}
             <br />
-            <br />
+            {/* <br /> */}
             {moduleFetchStatus.status && !moduleFetchStatus.result && (
               <Message negative>
                 <Message.Header>Could not fetch the module</Message.Header>
                 <p>{moduleFetchStatus.message}</p>
               </Message>
             )}
+            {transactionStatus.status &&
+              (!transactionStatus.result ? (
+                <Message negative>
+                  <Message.Header>Transaction Failed</Message.Header>
+                  <p>{transactionStatus.message}</p>
+                </Message>
+              ) : (
+                <Message positive>
+                  <Message.Header>
+                    Transaction Executed Successfully
+                  </Message.Header>
+                  <p>{transactionStatus.message}</p>
+                </Message>
+              ))}
             {moduleFetchStatus.result && (
               <div>
                 <Header as="h3" dividing>
@@ -191,13 +258,37 @@ function App() {
                                 return (
                                   <List.Item>
                                     {/* <Button content={params} /> */}
-                                    <Input label={params} placeholder={params} onChange={(e) => handleTransactionArguments(index, paramIndex, e)} value={transactionArgument[index][paramIndex]} />
+                                    <Input
+                                      label={params}
+                                      placeholder={params}
+                                      onChange={(e) =>
+                                        handleTransactionArguments(
+                                          index,
+                                          paramIndex,
+                                          e
+                                        )
+                                      }
+                                      value={
+                                        transactionArgument[index][paramIndex]
+                                      }
+                                    />
                                   </List.Item>
                                 );
                             }
                           )}
                         </List>
-                        <Button secondary onClick={() => executeTransaction(index)}>Execute</Button>
+                        {transactionLoading ? (
+                          <Button secondary loading>
+                            Executing
+                          </Button>
+                        ) : (
+                          <Button
+                            secondary
+                            onClick={() => executeTransaction(index, func.name)}
+                          >
+                            Execute
+                          </Button>
+                        )}
                       </Accordion.Content>
                     </Accordion>
                   );
