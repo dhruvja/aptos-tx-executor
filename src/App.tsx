@@ -8,6 +8,10 @@ import {
   Card,
   Image,
   Message,
+  Accordion,
+  Icon,
+  List,
+  Input,
 } from "semantic-ui-react";
 import Startbar from "./Startbar";
 import { Types, AptosClient, BCS } from "aptos";
@@ -32,6 +36,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [moduleFetchLoading, setModuleFetchLoading] = useState<boolean>(false);
   const [moduleABI, setModuleABI] = useState<Types.MoveModule>();
+  const [activeFunctionsIndex, setActiveFunctionsIndex] = useState<number>(-1);
 
   React.useEffect(() => {
     connectToWallet();
@@ -85,6 +90,13 @@ function App() {
     }
   };
 
+  const handleFunctionsAccordion = (e: any, titleProps: any) => {
+    const { index } = titleProps;
+    index === activeFunctionsIndex
+      ? setActiveFunctionsIndex(-1)
+      : setActiveFunctionsIndex(index);
+  };
+
   return (
     <div>
       <Startbar />
@@ -133,7 +145,8 @@ function App() {
                 Fetch
               </Button>
             )}
-            <br /><br />
+            <br />
+            <br />
             {moduleFetchStatus.status && !moduleFetchStatus.result && (
               <Message negative>
                 <Message.Header>Could not fetch the module</Message.Header>
@@ -142,10 +155,40 @@ function App() {
             )}
             {moduleFetchStatus.result && (
               <div>
-                <Header as="h3" dividing>Exposed Functions</Header>
-                {moduleABI?.exposed_functions.map((func) => {
-                  console.log(func.name);
-                  return <p>{func.name}</p>;
+                <Header as="h3" dividing>
+                  Exposed Functions
+                </Header>
+                {moduleABI?.exposed_functions.map((func, index) => {
+                  return (
+                    <Accordion>
+                      <Accordion.Title
+                        active={activeFunctionsIndex === index}
+                        index={index}
+                        onClick={handleFunctionsAccordion}
+                      >
+                        <Icon name="dropdown" />
+                        {func.name}
+                      </Accordion.Title>
+                      <Accordion.Content
+                        active={activeFunctionsIndex === index}
+                      >
+                        <List unordered>
+                          {moduleABI.exposed_functions[index].params.map(
+                            (params, index) => {
+                              if (params !== "&signer")
+                                return (
+                                  <List.Item>
+                                    {/* <Button content={params} /> */}
+                                    <Input label={params} placeholder={params} />
+                                  </List.Item>
+                                );
+                            }
+                          )}
+                        </List>
+                        <Button secondary>Execute</Button>
+                      </Accordion.Content>
+                    </Accordion>
+                  );
                 })}
               </div>
             )}
