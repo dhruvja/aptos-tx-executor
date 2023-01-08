@@ -1,0 +1,64 @@
+{
+  "name": "first-dapp",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@semantic-ui-react/css-patch": "^1.1.2",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.2.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.5.0",
+    "@types/node": "^16.11.33",
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.3",
+    "@types/semantic-ui": "^2.2.7",
+    "aptos": "^1.3.15",
+    "base58-js": "^1.0.4",
+    "buffer": "^6.0.3",
+    "concurrently": "^7.6.0",
+    "react": "^18.1.0",
+    "react-bootstrap": "^2.6.0",
+    "react-component-updater": "^1.0.7",
+    "react-countdown": "^2.3.5",
+    "react-countdown-simple": "^1.0.12",
+    "react-dom": "^18.1.0",
+    "react-scripts": "5.0.1",
+    "reactjs-popup": "^2.0.5",
+    "semantic-ui-css": "^2.4.1",
+    "semantic-ui-react": "^2.0.3",
+    "string-hex": "^1.0.0",
+    "typescript": "^4.6.4",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "build:style": "tailwind build -i ./src/index.css -o ./public/index.css",
+    "watch:style": "tailwind build -i ./src/index.css -o ./public/index.css --watch",
+    "dev": "concurrently \"npm run watch:style\" \"react-scripts start\"",
+    "postinstall": "semantic-ui-css-patch",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.2.4"
+  }
+}
