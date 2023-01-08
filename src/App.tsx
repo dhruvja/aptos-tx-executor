@@ -47,6 +47,9 @@ function App() {
     result: false,
     message: "",
   });
+  const [typeArgument, setTypeArguments] = useState(
+    Array(n).fill(Array(n).fill(""))
+  );
 
   React.useEffect(() => {
     connectToWallet();
@@ -117,6 +120,16 @@ function App() {
     setTransactionArguments(copy);
   };
 
+  const handleTypeArguments = (
+    functionIndex: number,
+    paramIndex: number,
+    e: any
+  ) => {
+    let copy = [...typeArgument];
+    copy[functionIndex][paramIndex] = e.target.value;
+    setTypeArguments(copy);
+  };
+
   const executeTransaction = async (
     functionIndex: number,
     functionName: string
@@ -128,12 +141,17 @@ function App() {
         return args !== "";
       }
     );
+    const localTypeArguments = typeArgument[functionIndex].filter(
+      (args: any) => {
+        return args !== "";
+      }
+    );
     console.log(localArguments);
     const payload = {
       arguments: localArguments,
       function: `${moduleDetails.address}::${moduleDetails.name}::${functionName}`,
       type: "entry_function_payload",
-      type_arguments: [],
+      type_arguments: localTypeArguments,
     };
     try {
       const pendingTransaction = await (
@@ -145,7 +163,7 @@ function App() {
         pendingTransaction.hash
       );
       console.log(txn);
-      console.log(txn.hash, txn.type)
+      console.log(txn.hash, txn.type);
       setTransactionStatus({
         status: true,
         result: true,
@@ -211,7 +229,7 @@ function App() {
               </Button>
             )}
             <br />
-            {/* <br /> */}
+            <br />
             {moduleFetchStatus.status && !moduleFetchStatus.result && (
               <Message negative>
                 <Message.Header>Could not fetch the module</Message.Header>
@@ -251,6 +269,10 @@ function App() {
                       <Accordion.Content
                         active={activeFunctionsIndex === index}
                       >
+                        {moduleABI.exposed_functions[index].params
+                          .length > 0 && (
+                          <Header as="h5">Transaction Arguments</Header>
+                        )}
                         <List unordered>
                           {moduleABI.exposed_functions[index].params.map(
                             (params, paramIndex) => {
@@ -276,6 +298,28 @@ function App() {
                                 );
                             }
                           )}
+                        </List>
+                        {moduleABI.exposed_functions[index].generic_type_params
+                          .length > 0 && (
+                          <Header as="h5">Type Arguments</Header>
+                        )}
+                        <List unordered>
+                          {moduleABI.exposed_functions[
+                            index
+                          ].generic_type_params.map((params, paramIndex) => {
+                            return (
+                              <List.Item>
+                                <Input
+                                  label="Enter the Type parameter"
+                                  placeholder="Eg: 0x1::coin::AptosCoin"
+                                  onChange={(e) =>
+                                    handleTypeArguments(index, paramIndex, e)
+                                  }
+                                  // value={typeArgument[index][paramIndex]}
+                                />
+                              </List.Item>
+                            );
+                          })}
                         </List>
                         {transactionLoading ? (
                           <Button secondary loading>
