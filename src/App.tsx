@@ -20,7 +20,7 @@ var Buffer = require("buffer/").Buffer;
 
 function App() {
   // Retrieve aptos.account on initial render and store it.
-  const n = 10;
+  const n = 15;
   const networkOptions = [
     {key: 'Devnet', value: 'https://fullnode.devnet.aptoslabs.com/v1', text: 'Devnet'},
     {key: 'Testnet', value: 'https://fullnode.testnet.aptoslabs.com/v1', text: 'Testnet'},
@@ -109,6 +109,15 @@ function App() {
       });
       setModuleABI(moduleABI.abi);
       setModuleFetchLoading(false);
+      const totalFunctions = moduleABI.abi?.exposed_functions.length;
+      let maximumArgs = 1;
+      moduleABI.abi?.exposed_functions.forEach((func, index) => {
+        if (func.params.length > maximumArgs)
+          maximumArgs = func.params.length;
+      });
+      const totalArguments = Array(totalFunctions).fill(Array(maximumArgs).fill(""))
+      setTransactionArguments(totalArguments);
+      setTypeArguments(totalArguments);
     } catch (error) {
       console.log((error as Error).message);
       setModuleFetchStatus({
@@ -317,7 +326,7 @@ function App() {
                                         )
                                       }
                                       value={
-                                        transactionArgument[index][paramIndex]
+                                        transactionArgument[index][paramIndex] != undefined ? transactionArgument[index][paramIndex] : ""
                                       }
                                     />
                                   </List.Item>
