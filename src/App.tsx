@@ -116,8 +116,9 @@ function App() {
           maximumArgs = func.params.length;
       });
       const totalArguments = Array(totalFunctions).fill(Array(maximumArgs).fill(""))
+      const totalTypeArguments = Array(totalFunctions).fill(Array(maximumArgs).fill(""))
       setTransactionArguments(totalArguments);
-      setTypeArguments(totalArguments);
+      setTypeArguments(totalTypeArguments);
     } catch (error) {
       console.log((error as Error).message);
       setModuleFetchStatus({
@@ -141,7 +142,7 @@ function App() {
     paramIndex: number,
     e: any
   ) => {
-    let copy = [...transactionArgument];
+    let copy = JSON.parse(JSON.stringify(transactionArgument)); 
     copy[functionIndex][paramIndex] = e.target.value;
     setTransactionArguments(copy);
   };
@@ -151,8 +152,7 @@ function App() {
     paramIndex: number,
     e: any
   ) => {
-    console.log(e.target.value);
-    let copy = [...typeArgument];
+    let copy = JSON.parse(JSON.stringify(typeArgument)); 
     copy[functionIndex][paramIndex] = e.target.value;
     setTypeArguments(copy);
   };
@@ -164,6 +164,7 @@ function App() {
     setTransactionLoading(true);
     const client = new AptosClient(network);
     console.log(transactionArgument[functionIndex]);
+    console.log(typeArgument[functionIndex]);
     const localArguments = transactionArgument[functionIndex].filter(
       (args: any) => {
         return args !== "";
@@ -175,6 +176,7 @@ function App() {
       }
     );
     console.log(localArguments);
+    console.log(localTypeArguments);
     const payload = {
       arguments: localArguments,
       function: `${moduleDetails.address}::${moduleDetails.name}::${functionName}`,
@@ -308,7 +310,7 @@ function App() {
                       >
                         {moduleABI.exposed_functions[index].params.length >
                           0 && <Header as="h5">Transaction Arguments</Header>}
-                        <List unordered>
+                        <List>
                           {moduleABI.exposed_functions[index].params.map(
                             (params, paramIndex) => {
                               if (params !== "&signer")
@@ -316,6 +318,7 @@ function App() {
                                   <List.Item>
                                     {/* <Button content={params} /> */}
                                     <Input
+                                      key={paramIndex}
                                       label={params}
                                       placeholder={params}
                                       onChange={(e) =>
@@ -338,13 +341,14 @@ function App() {
                           .length > 0 && (
                           <Header as="h5">Type Arguments</Header>
                         )}
-                        <List unordered>
+                        <List >
                           {moduleABI.exposed_functions[
                             index
                           ].generic_type_params.map((params, paramIndex) => {
                             return (
                               <List.Item>
                                 <Input
+                                  key={paramIndex}
                                   label="Enter the Type parameter"
                                   placeholder="Eg: 0x1::coin::AptosCoin"
                                   onChange={(e) =>
