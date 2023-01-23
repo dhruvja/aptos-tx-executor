@@ -16,6 +16,8 @@ import {
 } from "semantic-ui-react";
 import Startbar from "./Startbar";
 import { Types, AptosClient, BCS } from "aptos";
+import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
 var Buffer = require("buffer/").Buffer;
 
 function App() {
@@ -58,23 +60,36 @@ function App() {
     Array(n).fill(Array(n).fill(""))
   );
 
-  React.useEffect(() => {
-    connectToWallet();
-    console.log(address);
-  }, []);
+  const {
+    connect,
+    account,
+    connected,
+    disconnect,
+    wallet,
+    wallets,
+    signAndSubmitTransaction,
+    signTransaction,
+    signMessage,
+    signMessageAndVerify,
+  } = useWallet();
 
-  const connectToWallet = async () => {
-    const status = await (window as any).aptos.isConnected();
-    if (!status) {
-      const result = await window.aptos.connect();
-      const account = await window.aptos.account();
-      setAddress(account.address);
-    } else {
-      const account = await window.aptos.account();
-      setAddress(account.address);
-      console.log("Wallet connected", address);
-    }
-  };
+  // React.useEffect(() => {
+  //   // connectToWallet();
+  //   console.log(address);
+  // }, []);
+
+  // const connectToWallet = async () => {
+  //   const status = await (window as any).aptos.isConnected();
+  //   if (!status) {
+  //     const result = await window.aptos.connect();
+  //     const account = await window.aptos.account();
+  //     setAddress(account.address);
+  //   } else {
+  //     const account = await window.aptos.account();
+  //     setAddress(account.address);
+  //     console.log("Wallet connected", address);
+  //   }
+  // };
 
   const handleNetworkChange = (e: any, data: any) => {
     setNetwork(data.value);
@@ -161,6 +176,10 @@ function App() {
     functionIndex: number,
     functionName: string
   ) => {
+    if(!connected) {
+      alert("Please Connect your wallet");
+      return;
+    }
     setTransactionLoading(true);
     const client = new AptosClient(network);
     console.log(transactionArgument[functionIndex]);
@@ -184,9 +203,7 @@ function App() {
       type_arguments: localTypeArguments,
     };
     try {
-      const pendingTransaction = await (
-        window as any
-      ).aptos.signAndSubmitTransaction(payload);
+      const pendingTransaction = await signAndSubmitTransaction(payload);
 
       // In most cases a dApp will want to wait for the transaction, in these cases you can use the typescript sdk
       const txn = await client.waitForTransactionWithResult(
@@ -221,13 +238,15 @@ function App() {
           <Header as="h3" dividing>
             Enter the details
           </Header>
-          {address !== "" ? (
+          <WalletSelector />
+          <br/><br/>
+          {/* {address !== "" ? (
             <p>
               Wallet Connected: <b>{address}</b>
             </p>
           ) : (
             <p>Not Connected</p>
-          )}
+          )} */}
           <Form>
             <Dropdown
               placeholder="Select Network"
@@ -350,7 +369,7 @@ function App() {
                                 <Input
                                   key={paramIndex}
                                   label="Enter the Type parameter"
-                                  placeholder="Eg: 0x1::coin::AptosCoin"
+                                  placeholder="Eg: 0x1::aptos_coin::AptosCoin"
                                   onChange={(e) =>
                                     handleTypeArguments(index, paramIndex, e)
                                   }
