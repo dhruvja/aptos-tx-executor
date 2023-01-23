@@ -311,9 +311,11 @@ function App() {
             {moduleFetchStatus.result && (
               <div>
                 <Header as="h3" dividing>
-                  Exposed Functions
+                  Entry Functions
                 </Header>
                 {moduleABI?.exposed_functions.map((func, index) => {
+                  if(!func.is_entry)
+                    return;
                   return (
                     <Accordion>
                       <Accordion.Title
@@ -391,6 +393,98 @@ function App() {
                             Execute
                           </Button>
                         )}
+                      </Accordion.Content>
+                    </Accordion>
+                  );
+                })}
+              </div>
+            )}
+            <br/><br/>
+            {moduleFetchStatus.result && (
+              <div>
+                <Header as="h3" dividing>
+                  Public Functions (cannot be called using API/SDK)
+                </Header>
+                {moduleABI?.exposed_functions.map((func, index) => {
+                  if(func.is_entry)
+                    return;
+                  return (
+                    <Accordion>
+                      <Accordion.Title
+                        active={activeFunctionsIndex === index}
+                        index={index}
+                        onClick={handleFunctionsAccordion}
+                      >
+                        <Icon name="dropdown" />
+                        <b>{func.name}</b>
+                      </Accordion.Title>
+                      <Accordion.Content
+                        active={activeFunctionsIndex === index}
+                      >
+                        {moduleABI.exposed_functions[index].params.length >
+                          0 && <Header as="h5">Transaction Arguments</Header>}
+                        <List>
+                          {moduleABI.exposed_functions[index].params.map(
+                            (params, paramIndex) => {
+                              if (params !== "&signer")
+                                return (
+                                  <List.Item>
+                                    {/* <Button content={params} /> */}
+                                    <Input
+                                      key={paramIndex}
+                                      label={params}
+                                      placeholder={params}
+                                      onChange={(e) =>
+                                        handleTransactionArguments(
+                                          index,
+                                          paramIndex,
+                                          e
+                                        )
+                                      }
+                                      value={
+                                        transactionArgument[index][paramIndex] != undefined ? transactionArgument[index][paramIndex] : ""
+                                      }
+                                    />
+                                  </List.Item>
+                                );
+                            }
+                          )}
+                        </List>
+                        {moduleABI.exposed_functions[index].generic_type_params
+                          .length > 0 && (
+                          <Header as="h5">Type Arguments</Header>
+                        )}
+                        <List >
+                          {moduleABI.exposed_functions[
+                            index
+                          ].generic_type_params.map((params, paramIndex) => {
+                            return (
+                              <List.Item>
+                                <Input
+                                  key={paramIndex}
+                                  label="Enter the Type parameter"
+                                  placeholder="Eg: 0x1::aptos_coin::AptosCoin"
+                                  onChange={(e) =>
+                                    handleTypeArguments(index, paramIndex, e)
+                                  }
+                                  // value={typeArgument[index][paramIndex]}
+                                />
+                              </List.Item>
+                            );
+                          })}
+                        </List>
+                        {/* {transactionLoading ? (
+                          <Button secondary loading>
+                            Executing
+                          </Button>
+                        ) : (
+                          <Button
+                            secondary
+                            disabled
+                          >
+                            Execute
+                          </Button>
+                        )} */}
                       </Accordion.Content>
                     </Accordion>
                   );
