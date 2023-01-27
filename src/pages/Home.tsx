@@ -28,11 +28,6 @@ function Home(props: any) {
   const n = 15;
   const networkOptions = [
     {
-      key: "localnet",
-      value: "http://localhost:8080",
-      text: "Localnet",
-    },
-    {
       key: "devnet",
       value: "https://fullnode.devnet.aptoslabs.com/v1",
       text: "Devnet",
@@ -46,6 +41,11 @@ function Home(props: any) {
       key: "mainnet",
       value: "https://fullnode.mainnet.aptoslabs.com/v1",
       text: "Mainnet",
+    },
+    {
+      key: "localnet",
+      value: "http://localhost:8080",
+      text: "Localnet",
     },
   ];
 
@@ -112,6 +112,9 @@ function Home(props: any) {
         break;
       case "mainnet":
         selectedNetwork = networkOptions[2].value;
+        break;
+      case "localnet":
+        selectedNetwork = networkOptions[3].value;
         break;
       default:
         selectedNetwork = networkOptions[0].value;
@@ -207,6 +210,9 @@ function Home(props: any) {
         break;
       case "https://fullnode.mainnet.aptoslabs.com/v1":
         selectedNetwork = networkOptions[2].key;
+        break;
+      case "http://localhost:8080":
+        selectedNetwork = networkOptions[3].key;
         break;
       default:
         selectedNetwork = networkOptions[0].key;
