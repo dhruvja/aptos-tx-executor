@@ -32,6 +32,7 @@
     "react-countdown": "^2.3.5",
     "react-countdown-simple": "^1.0.12",
     "react-dom": "^18.1.0",
+    "react-router-dom": "^5.2.1",
     "react-scripts": "5.0.1",
     "reactjs-popup": "^2.0.5",
     "semantic-ui-css": "^2.4.1",
@@ -69,6 +70,7 @@
     ]
   },
   "devDependencies": {
+    "@types/react-router-dom": "^5.3.3",
     "tailwindcss": "^3.2.4"
   }
 }

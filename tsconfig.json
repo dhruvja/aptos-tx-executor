@@ -22,5 +22,5 @@
   },
   "include": [
     "./src/*"
-  ]
+, "src/components/Startbar.js", "src/components/Startbar.js"  ]
 }
