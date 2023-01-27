@@ -18,19 +18,31 @@ import Startbar from "../components/Startbar";
 import { Types, AptosClient, BCS } from "aptos";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import {useParams,useHistory } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 
 var Buffer = require("buffer/").Buffer;
 
 function Home(props: any) {
-  const history = useHistory()
+  const history = useHistory();
   // Retrieve aptos.account on initial render and store it.
   const n = 15;
   const networkOptions = [
-    {key: 'Devnet', value: 'https://fullnode.devnet.aptoslabs.com/v1', text: 'Devnet'},
-    {key: 'Testnet', value: 'https://fullnode.testnet.aptoslabs.com/v1', text: 'Testnet'},
-    {key: 'Mainnet', value: 'https://fullnode.mainnet.aptoslabs.com/v1', text: 'Mainnet'}
-  ]
+    {
+      key: "devnet",
+      value: "https://fullnode.devnet.aptoslabs.com/v1",
+      text: "Devnet",
+    },
+    {
+      key: "testnet",
+      value: "https://fullnode.testnet.aptoslabs.com/v1",
+      text: "Testnet",
+    },
+    {
+      key: "mainnet",
+      value: "https://fullnode.mainnet.aptoslabs.com/v1",
+      text: "Mainnet",
+    },
+  ];
 
   const [moduleDetails, setModuleDetails] = useState({
     address: "",
@@ -56,7 +68,7 @@ function Home(props: any) {
     result: false,
     message: "",
   });
-  const [network, setNetwork] = useState<string>(
+  const [network, setNetwork] = useState(
     "https://fullnode.devnet.aptoslabs.com"
   );
   const [typeArgument, setTypeArguments] = useState(
@@ -77,31 +89,124 @@ function Home(props: any) {
   } = useWallet();
 
   React.useEffect(() => {
-    console.log(props.match.params.moduleAddress, props.match.params.moduleName);
+    console.log(
+      props.match.params.moduleAddress,
+      props.match.params.moduleName,
+      props.match.params.network
+    );
+    let selectedNetwork = props.match.params.network;
     const moduleAddress = props.match.params.moduleAddress;
     const moduleName = props.match.params.moduleName;
-    if(moduleAddress !== undefined && moduleName !== undefined){
-        setModuleDetails({
-            address: moduleAddress,
-            name: moduleName
-        });
+    const functionIndex = props.match.params.functionIndex;
+    switch (selectedNetwork) {
+      case "devnet":
+        selectedNetwork = networkOptions[0].value;
+        break;
+      case "testnet":
+        selectedNetwork = networkOptions[1].value;
+        break;
+      case "mainnet":
+        selectedNetwork = networkOptions[2].value;
+        break;
+      default:
+        selectedNetwork = networkOptions[0].value;
+        break;
+    }
+    if (moduleAddress !== undefined && moduleName !== undefined) {
+      setModuleDetails({
+        address: moduleAddress,
+        name: moduleName,
+      });
+      console.log(selectedNetwork);
+      setNetwork(selectedNetwork);
+      getAccountModules(
+        selectedNetwork,
+        moduleAddress,
+        moduleName,
+        functionIndex
+      );
     }
   }, []);
 
+  const getAccountModules = async (
+    selectedNetwork: string,
+    moduleAddress: string,
+    moduleName: string,
+    functionIndex: string
+  ) => {
+    setModuleFetchLoading(true);
+    const client = new AptosClient(selectedNetwork);
+    try {
+      const moduleABI = await client.getAccountModule(
+        moduleAddress,
+        moduleName
+      );
+      console.log(moduleABI);
+      setModuleFetchStatus({
+        status: true,
+        result: true,
+        message: "",
+      });
+      setModuleABI(moduleABI.abi);
+      setModuleFetchLoading(false);
+      const totalFunctions = moduleABI.abi?.exposed_functions.length;
+      let maximumArgs = 1;
+      moduleABI.abi?.exposed_functions.forEach((func, index) => {
+        if (func.params.length > maximumArgs) maximumArgs = func.params.length;
+      });
+      const totalArguments = Array(totalFunctions).fill(
+        Array(maximumArgs).fill("")
+      );
+      const totalTypeArguments = Array(totalFunctions).fill(
+        Array(maximumArgs).fill("")
+      );
+      setTransactionArguments(totalArguments);
+      setTypeArguments(totalTypeArguments);
+      setActiveFunctionsIndex(parseInt(functionIndex));
+    } catch (error) {
+      console.log((error as Error).message);
+      setModuleFetchStatus({
+        status: true,
+        result: false,
+        message: (error as Error).message,
+      });
+      setModuleFetchLoading(false);
+    }
+  };
+
   const handleNetworkChange = (e: any, data: any) => {
+    console.log(data.key);
     setNetwork(data.value);
     setModuleFetchStatus({
       status: false,
       result: false,
-      message: ""
-    })
-  }
+      message: "",
+    });
+  };
 
   const handleChange = (e: any) => {
     setModuleDetails({
       ...moduleDetails,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const getNetworkName = (network: string) => {
+    let selectedNetwork;
+    switch (network) {
+      case "https://fullnode.devnet.aptoslabs.com/v1":
+        selectedNetwork = networkOptions[0].key;
+        break;
+      case "https://fullnode.testnet.aptoslabs.com/v1":
+        selectedNetwork = networkOptions[1].key;
+        break;
+      case "https://fullnode.mainnet.aptoslabs.com/v1":
+        selectedNetwork = networkOptions[2].key;
+        break;
+      default:
+        selectedNetwork = networkOptions[0].key;
+    }
+    return selectedNetwork;
   };
 
   const handleModuleDetailsSubmit = async (e: any) => {
@@ -124,11 +229,14 @@ function Home(props: any) {
       const totalFunctions = moduleABI.abi?.exposed_functions.length;
       let maximumArgs = 1;
       moduleABI.abi?.exposed_functions.forEach((func, index) => {
-        if (func.params.length > maximumArgs)
-          maximumArgs = func.params.length;
+        if (func.params.length > maximumArgs) maximumArgs = func.params.length;
       });
-      const totalArguments = Array(totalFunctions).fill(Array(maximumArgs).fill(""))
-      const totalTypeArguments = Array(totalFunctions).fill(Array(maximumArgs).fill(""))
+      const totalArguments = Array(totalFunctions).fill(
+        Array(maximumArgs).fill("")
+      );
+      const totalTypeArguments = Array(totalFunctions).fill(
+        Array(maximumArgs).fill("")
+      );
       setTransactionArguments(totalArguments);
       setTypeArguments(totalTypeArguments);
     } catch (error) {
@@ -139,15 +247,24 @@ function Home(props: any) {
         message: (error as Error).message,
       });
       setModuleFetchLoading(false);
-      history.push(`/${moduleDetails.address}/${moduleDetails.name}`)
     }
+    const selectedNetwork = getNetworkName(network);
+    history.push(
+      `/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/-1`
+    );
   };
 
   const handleFunctionsAccordion = (e: any, titleProps: any) => {
     const { index } = titleProps;
-    index === activeFunctionsIndex
-      ? setActiveFunctionsIndex(-1)
-      : setActiveFunctionsIndex(index);
+    if (index === activeFunctionsIndex) {
+      setActiveFunctionsIndex(-1);
+      const selectedNetwork = getNetworkName(network);
+      history.push(`/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/-1`);
+    } else {
+      setActiveFunctionsIndex(index);
+      const selectedNetwork = getNetworkName(network);
+      history.push(`/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/${index}`);
+    }
   };
 
   const handleTransactionArguments = (
@@ -155,7 +272,7 @@ function Home(props: any) {
     paramIndex: number,
     e: any
   ) => {
-    let copy = JSON.parse(JSON.stringify(transactionArgument)); 
+    let copy = JSON.parse(JSON.stringify(transactionArgument));
     copy[functionIndex][paramIndex] = e.target.value;
     setTransactionArguments(copy);
   };
@@ -165,7 +282,7 @@ function Home(props: any) {
     paramIndex: number,
     e: any
   ) => {
-    let copy = JSON.parse(JSON.stringify(typeArgument)); 
+    let copy = JSON.parse(JSON.stringify(typeArgument));
     copy[functionIndex][paramIndex] = e.target.value;
     setTypeArguments(copy);
   };
@@ -174,7 +291,7 @@ function Home(props: any) {
     functionIndex: number,
     functionName: string
   ) => {
-    if(!connected) {
+    if (!connected) {
       alert("Please Connect your wallet");
       return;
     }
@@ -237,7 +354,8 @@ function Home(props: any) {
             Enter the details
           </Header>
           <WalletSelector />
-          <br/><br/>
+          <br />
+          <br />
           {/* {address !== "" ? (
             <p>
               Wallet Connected: <b>{address}</b>
@@ -251,6 +369,7 @@ function Home(props: any) {
               defaultValue="https://fullnode.devnet.aptoslabs.com/v1"
               selection
               options={networkOptions}
+              value={network}
               onChange={handleNetworkChange}
             />
             <br />
@@ -312,8 +431,7 @@ function Home(props: any) {
                   Entry Functions
                 </Header>
                 {moduleABI?.exposed_functions.map((func, index) => {
-                  if(!func.is_entry)
-                    return;
+                  if (!func.is_entry) return;
                   return (
                     <Accordion>
                       <Accordion.Title
@@ -348,7 +466,13 @@ function Home(props: any) {
                                         )
                                       }
                                       value={
-                                        transactionArgument[index][paramIndex] != undefined ? transactionArgument[index][paramIndex] : ""
+                                        transactionArgument[index][
+                                          paramIndex
+                                        ] != undefined
+                                          ? transactionArgument[index][
+                                              paramIndex
+                                            ]
+                                          : ""
                                       }
                                     />
                                   </List.Item>
@@ -360,7 +484,7 @@ function Home(props: any) {
                           .length > 0 && (
                           <Header as="h5">Type Arguments</Header>
                         )}
-                        <List >
+                        <List>
                           {moduleABI.exposed_functions[
                             index
                           ].generic_type_params.map((params, paramIndex) => {
@@ -397,15 +521,15 @@ function Home(props: any) {
                 })}
               </div>
             )}
-            <br/><br/>
+            <br />
+            <br />
             {moduleFetchStatus.result && (
               <div>
                 <Header as="h3" dividing>
                   Public Functions (cannot be called using API/SDK)
                 </Header>
                 {moduleABI?.exposed_functions.map((func, index) => {
-                  if(func.is_entry)
-                    return;
+                  if (func.is_entry) return;
                   return (
                     <Accordion>
                       <Accordion.Title
@@ -440,7 +564,13 @@ function Home(props: any) {
                                         )
                                       }
                                       value={
-                                        transactionArgument[index][paramIndex] != undefined ? transactionArgument[index][paramIndex] : ""
+                                        transactionArgument[index][
+                                          paramIndex
+                                        ] != undefined
+                                          ? transactionArgument[index][
+                                              paramIndex
+                                            ]
+                                          : ""
                                       }
                                     />
                                   </List.Item>
@@ -452,7 +582,7 @@ function Home(props: any) {
                           .length > 0 && (
                           <Header as="h5">Type Arguments</Header>
                         )}
-                        <List >
+                        <List>
                           {moduleABI.exposed_functions[
                             index
                           ].generic_type_params.map((params, paramIndex) => {
