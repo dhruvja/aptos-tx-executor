@@ -28,6 +28,11 @@ function Home(props: any) {
   const n = 15;
   const networkOptions = [
     {
+      key: "localnet",
+      value: "http://localhost:8080",
+      text: "Localnet",
+    },
+    {
       key: "devnet",
       value: "https://fullnode.devnet.aptoslabs.com/v1",
       text: "Devnet",
@@ -69,7 +74,7 @@ function Home(props: any) {
     message: "",
   });
   const [network, setNetwork] = useState(
-    "https://fullnode.devnet.aptoslabs.com"
+    "https://fullnode.devnet.aptoslabs.com/v1"
   );
   const [typeArgument, setTypeArguments] = useState(
     Array(n).fill(Array(n).fill(""))
@@ -259,11 +264,15 @@ function Home(props: any) {
     if (index === activeFunctionsIndex) {
       setActiveFunctionsIndex(-1);
       const selectedNetwork = getNetworkName(network);
-      history.push(`/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/-1`);
+      history.push(
+        `/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/-1`
+      );
     } else {
       setActiveFunctionsIndex(index);
       const selectedNetwork = getNetworkName(network);
-      history.push(`/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/${index}`);
+      history.push(
+        `/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/${index}`
+      );
     }
   };
 
