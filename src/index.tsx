@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./App";
+import {App} from "./App";
 import "semantic-ui-css/semantic.min.css"
 import { RiseWallet } from "@rise-wallet/wallet-adapter";
 import { PetraWallet } from "petra-plugin-wallet-adapter";
