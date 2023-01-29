@@ -64,6 +64,7 @@ function Home(props: any) {
   const [moduleFetchLoading, setModuleFetchLoading] = useState<boolean>(false);
   const [moduleABI, setModuleABI] = useState<Types.MoveModule>();
   const [activeFunctionsIndex, setActiveFunctionsIndex] = useState<number>(-1);
+  const [activeHeadingIndex, setActiveHeadingIndex] = useState<number>(-1);
   const [transactionArgument, setTransactionArguments] = useState(
     Array(n).fill(Array(n).fill(""))
   );
@@ -142,6 +143,7 @@ function Home(props: any) {
     moduleName: string,
     functionIndex: string
   ) => {
+    console.log("Fetching Modules");
     setModuleFetchLoading(true);
     const client = new AptosClient(selectedNetwork);
     try {
@@ -149,6 +151,7 @@ function Home(props: any) {
         moduleAddress,
         moduleName
       );
+
       console.log(moduleABI);
       setModuleFetchStatus({
         status: true,
@@ -282,6 +285,23 @@ function Home(props: any) {
     }
   };
 
+  const handleHeadingAccordion = (e: any, titleProps: any) => {
+    const { index } = titleProps;
+    if (index === activeHeadingIndex) {
+      setActiveHeadingIndex(-1);
+      //   const selectedNetwork = getNetworkName(network);
+      //   history.push(
+      //     `/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/-1`
+      //   );
+    } else {
+      setActiveHeadingIndex(index);
+      //   const selectedNetwork = getNetworkName(network);
+      //   history.push(
+      //     `/${selectedNetwork}/${moduleDetails.address}/${moduleDetails.name}/${index}`
+      //   );
+    }
+  };
+
   const handleTransactionArguments = (
     functionIndex: number,
     paramIndex: number,
@@ -368,6 +388,9 @@ function Home(props: any) {
           <Header as="h3" dividing>
             Enter the details
           </Header>
+          <h3>This is a Aptos module explorer where u can enter the module address and name and call the smart contract functions. You can execute transactions by connecting your wallet. 
+              Refer: <a style={{display: 'inline'}} href="https://github.com/dhruvja/aptos-tx-executor#aptos-transaction-executor-ui"><Icon fitted size='large' name='github' /></a> on how to use it.
+          </h3>
           <WalletSelector />
           <br />
           <br />
@@ -441,182 +464,201 @@ function Home(props: any) {
                 </Message>
               ))}
             {moduleFetchStatus.result && (
-              <div>
-                <Header as="h3" dividing>
-                  Entry Functions
-                </Header>
-                {moduleABI?.exposed_functions.map((func, index) => {
-                  if (!func.is_entry) return;
-                  return (
-                    <Accordion>
-                      <Accordion.Title
-                        active={activeFunctionsIndex === index}
-                        index={index}
-                        onClick={handleFunctionsAccordion}
-                      >
-                        <Icon name="dropdown" />
-                        <b>{func.name}</b>
-                      </Accordion.Title>
-                      <Accordion.Content
-                        active={activeFunctionsIndex === index}
-                      >
-                        {moduleABI.exposed_functions[index].params.length >
-                          0 && <Header as="h5">Transaction Arguments</Header>}
-                        <List>
-                          {moduleABI.exposed_functions[index].params.map(
-                            (params, paramIndex) => {
-                              if (params !== "&signer")
-                                return (
-                                  <List.Item>
-                                    {/* <Button content={params} /> */}
-                                    <Input
-                                      key={paramIndex}
-                                      label={params}
-                                      placeholder={params}
-                                      onChange={(e) =>
-                                        handleTransactionArguments(
-                                          index,
-                                          paramIndex,
-                                          e
-                                        )
-                                      }
-                                      value={
-                                        transactionArgument[index][
-                                          paramIndex
-                                        ] != undefined
-                                          ? transactionArgument[index][
-                                              paramIndex
-                                            ]
-                                          : ""
-                                      }
-                                    />
-                                  </List.Item>
-                                );
-                            }
+              <Accordion>
+                <Accordion.Title
+                  active={activeHeadingIndex === 0}
+                  index={0}
+                  onClick={handleHeadingAccordion}
+                  as="h3"
+                >
+                  <Header as="h3" dividing>
+                    <Icon name="dropdown" />
+                    Entry Functions
+                  </Header>
+                </Accordion.Title>
+                <Accordion.Content active={activeHeadingIndex === 0}>
+                  {moduleABI?.exposed_functions.map((func, index) => {
+                    if (!func.is_entry) return;
+                    return (
+                      <Accordion>
+                        <Accordion.Title
+                          active={activeFunctionsIndex === index}
+                          index={index}
+                          onClick={handleFunctionsAccordion}
+                        >
+                          <Icon name="dropdown" />
+                          <b>{func.name}</b>
+                        </Accordion.Title>
+                        <Accordion.Content
+                          active={activeFunctionsIndex === index}
+                        >
+                          {moduleABI.exposed_functions[index].params.length >
+                            0 && <Header as="h5">Transaction Arguments</Header>}
+                          <List>
+                            {moduleABI.exposed_functions[index].params.map(
+                              (params, paramIndex) => {
+                                if (params !== "&signer")
+                                  return (
+                                    <List.Item>
+                                      {/* <Button content={params} /> */}
+                                      <Input
+                                        key={paramIndex}
+                                        label={params}
+                                        placeholder={params}
+                                        onChange={(e) =>
+                                          handleTransactionArguments(
+                                            index,
+                                            paramIndex,
+                                            e
+                                          )
+                                        }
+                                        value={
+                                          transactionArgument[index][
+                                            paramIndex
+                                          ] != undefined
+                                            ? transactionArgument[index][
+                                                paramIndex
+                                              ]
+                                            : ""
+                                        }
+                                      />
+                                    </List.Item>
+                                  );
+                              }
+                            )}
+                          </List>
+                          {moduleABI.exposed_functions[index]
+                            .generic_type_params.length > 0 && (
+                            <Header as="h5">Type Arguments</Header>
                           )}
-                        </List>
-                        {moduleABI.exposed_functions[index].generic_type_params
-                          .length > 0 && (
-                          <Header as="h5">Type Arguments</Header>
-                        )}
-                        <List>
-                          {moduleABI.exposed_functions[
-                            index
-                          ].generic_type_params.map((params, paramIndex) => {
-                            return (
-                              <List.Item>
-                                <Input
-                                  key={paramIndex}
-                                  label="Enter the Type parameter"
-                                  placeholder="Eg: 0x1::aptos_coin::AptosCoin"
-                                  onChange={(e) =>
-                                    handleTypeArguments(index, paramIndex, e)
-                                  }
-                                  // value={typeArgument[index][paramIndex]}
-                                />
-                              </List.Item>
-                            );
-                          })}
-                        </List>
-                        {transactionLoading ? (
-                          <Button secondary loading>
-                            Executing
-                          </Button>
-                        ) : (
-                          <Button
-                            secondary
-                            onClick={() => executeTransaction(index, func.name)}
-                          >
-                            Execute
-                          </Button>
-                        )}
-                      </Accordion.Content>
-                    </Accordion>
-                  );
-                })}
-              </div>
+                          <List>
+                            {moduleABI.exposed_functions[
+                              index
+                            ].generic_type_params.map((params, paramIndex) => {
+                              return (
+                                <List.Item>
+                                  <Input
+                                    key={paramIndex}
+                                    label="Enter the Type parameter"
+                                    placeholder="Eg: 0x1::aptos_coin::AptosCoin"
+                                    onChange={(e) =>
+                                      handleTypeArguments(index, paramIndex, e)
+                                    }
+                                    // value={typeArgument[index][paramIndex]}
+                                  />
+                                </List.Item>
+                              );
+                            })}
+                          </List>
+                          {transactionLoading ? (
+                            <Button secondary loading>
+                              Executing
+                            </Button>
+                          ) : (
+                            <Button
+                              secondary
+                              onClick={() =>
+                                executeTransaction(index, func.name)
+                              }
+                            >
+                              Execute
+                            </Button>
+                          )}
+                        </Accordion.Content>
+                      </Accordion>
+                    );
+                  })}
+                </Accordion.Content>
+              </Accordion>
             )}
-            <br />
-            <br />
             {moduleFetchStatus.result && (
-              <div>
-                <Header as="h3" dividing>
-                  Public Functions (cannot be called using API/SDK)
-                </Header>
-                {moduleABI?.exposed_functions.map((func, index) => {
-                  if (func.is_entry) return;
-                  return (
-                    <Accordion>
-                      <Accordion.Title
-                        active={activeFunctionsIndex === index}
-                        index={index}
-                        onClick={handleFunctionsAccordion}
-                      >
-                        <Icon name="dropdown" />
-                        <b>{func.name}</b>
-                      </Accordion.Title>
-                      <Accordion.Content
-                        active={activeFunctionsIndex === index}
-                      >
-                        {moduleABI.exposed_functions[index].params.length >
-                          0 && <Header as="h5">Transaction Arguments</Header>}
-                        <List>
-                          {moduleABI.exposed_functions[index].params.map(
-                            (params, paramIndex) => {
-                              if (params !== "&signer")
-                                return (
-                                  <List.Item>
-                                    {/* <Button content={params} /> */}
-                                    <Input
-                                      key={paramIndex}
-                                      label={params}
-                                      placeholder={params}
-                                      onChange={(e) =>
-                                        handleTransactionArguments(
-                                          index,
-                                          paramIndex,
-                                          e
-                                        )
-                                      }
-                                      value={
-                                        transactionArgument[index][
-                                          paramIndex
-                                        ] != undefined
-                                          ? transactionArgument[index][
-                                              paramIndex
-                                            ]
-                                          : ""
-                                      }
-                                    />
-                                  </List.Item>
-                                );
-                            }
+              <Accordion>
+                <Accordion.Title
+                  active={activeHeadingIndex === 1}
+                  index={1}
+                  onClick={handleHeadingAccordion}
+                  as="h3"
+                >
+                  <Header as="h3" dividing>
+                    <Icon name="dropdown" />
+                    Public Functions (cannot be called using API/SDK)
+                  </Header>
+                </Accordion.Title>
+                <Accordion.Content active={activeHeadingIndex === 1}>
+                  {moduleABI?.exposed_functions.map((func, index) => {
+                    if (func.is_entry) return;
+                    return (
+                      <Accordion>
+                        <Accordion.Title
+                          active={activeFunctionsIndex === index}
+                          index={index}
+                          onClick={handleFunctionsAccordion}
+                        >
+                          <Icon name="dropdown" />
+                          <b>{func.name}</b>
+                        </Accordion.Title>
+                        <Accordion.Content
+                          active={activeFunctionsIndex === index}
+                        >
+                          {moduleABI.exposed_functions[index].params.length >
+                            0 && <Header as="h5">Transaction Arguments</Header>}
+                          <List>
+                            {moduleABI.exposed_functions[index].params.map(
+                              (params, paramIndex) => {
+                                if (params !== "&signer")
+                                  return (
+                                    <List.Item>
+                                      {/* <Button content={params} /> */}
+                                      <Input
+                                        key={paramIndex}
+                                        label={params}
+                                        placeholder={params}
+                                        onChange={(e) =>
+                                          handleTransactionArguments(
+                                            index,
+                                            paramIndex,
+                                            e
+                                          )
+                                        }
+                                        value={
+                                          transactionArgument[index][
+                                            paramIndex
+                                          ] != undefined
+                                            ? transactionArgument[index][
+                                                paramIndex
+                                              ]
+                                            : ""
+                                        }
+                                      />
+                                    </List.Item>
+                                  );
+                              }
+                            )}
+                          </List>
+                          {moduleABI.exposed_functions[index]
+                            .generic_type_params.length > 0 && (
+                            <Header as="h5">Type Arguments</Header>
                           )}
-                        </List>
-                        {moduleABI.exposed_functions[index].generic_type_params
-                          .length > 0 && (
-                          <Header as="h5">Type Arguments</Header>
-                        )}
-                        <List>
-                          {moduleABI.exposed_functions[
-                            index
-                          ].generic_type_params.map((params, paramIndex) => {
-                            return (
-                              <List.Item>
-                                <Input
-                                  key={paramIndex}
-                                  label="Enter the Type parameter"
-                                  placeholder="Eg: 0x1::aptos_coin::AptosCoin"
-                                  onChange={(e) =>
-                                    handleTypeArguments(index, paramIndex, e)
-                                  }
-                                  // value={typeArgument[index][paramIndex]}
-                                />
-                              </List.Item>
-                            );
-                          })}
-                        </List>
-                        {/* {transactionLoading ? (
+                          <List>
+                            {moduleABI.exposed_functions[
+                              index
+                            ].generic_type_params.map((params, paramIndex) => {
+                              return (
+                                <List.Item>
+                                  <Input
+                                    key={paramIndex}
+                                    label="Enter the Type parameter"
+                                    placeholder="Eg: 0x1::aptos_coin::AptosCoin"
+                                    onChange={(e) =>
+                                      handleTypeArguments(index, paramIndex, e)
+                                    }
+                                    // value={typeArgument[index][paramIndex]}
+                                  />
+                                </List.Item>
+                              );
+                            })}
+                          </List>
+                          {/* {transactionLoading ? (
                           <Button secondary loading>
                             Executing
                           </Button>
@@ -628,12 +670,91 @@ function Home(props: any) {
                             Execute
                           </Button>
                         )} */}
-                      </Accordion.Content>
-                    </Accordion>
-                  );
-                })}
-              </div>
+                        </Accordion.Content>
+                      </Accordion>
+                    );
+                  })}
+                </Accordion.Content>
+              </Accordion>
             )}
+            {/* {moduleFetchStatus.result && (
+              <Accordion>
+                <Accordion.Title
+                  active={activeHeadingIndex === 2}
+                  index={2}
+                  onClick={handleHeadingAccordion}
+                  as="h3"
+                >
+                  <Header as="h3" dividing>
+                    <Icon name="dropdown" />
+                    Resources
+                  </Header>
+                </Accordion.Title>
+                <Accordion.Content active={activeHeadingIndex === 2}>
+                  {moduleABI?.structs.map((struct, index) => {
+                    return (
+                      <Accordion>
+                        <Accordion.Title
+                          active={activeFunctionsIndex === index}
+                          index={index}
+                          onClick={handleFunctionsAccordion}
+                        >
+                          <Icon name="dropdown" />
+                          <b>{struct.name}</b>
+                        </Accordion.Title>
+                        <Accordion.Content
+                          active={activeFunctionsIndex === index}
+                        >
+                          <List as="ol">
+                                {struct.abilities.map(
+                                  (ability, abilityIndex) => {
+                                    return <List.Item as='li' value='-'>{ability}</List.Item>;
+                                  }
+                                )}
+                          </List>
+
+                          {moduleABI.exposed_functions[index]
+                            .generic_type_params.length > 0 && (
+                            <Header as="h5">Type Arguments</Header>
+                          )}
+                          <List>
+                            {moduleABI.exposed_functions[
+                              index
+                            ].generic_type_params.map((params, paramIndex) => {
+                              return (
+                                <List.Item>
+                                  <Input
+                                    key={paramIndex}
+                                    label="Enter the Type parameter"
+                                    placeholder="Eg: 0x1::aptos_coin::AptosCoin"
+                                    onChange={(e) =>
+                                      handleTypeArguments(index, paramIndex, e)
+                                    }
+                                    // value={typeArgument[index][paramIndex]}
+                                  />
+                                </List.Item>
+                              );
+                            })}
+                          </List>
+                          {transactionLoading ? (
+                          <Button secondary loading>
+                            Executing
+                          </Button>
+                        ) : (
+                          <Button
+                            secondary
+                            disabled
+                          >
+                            Execute
+                          </Button>
+                        )}
+                        </Accordion.Content>
+                      </Accordion>
+                    );
+                  })}
+                </Accordion.Content>
+              </Accordion>
+            )} */}
           </Form>
         </Segment>
       </div>
