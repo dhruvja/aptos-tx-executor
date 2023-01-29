@@ -32,6 +32,7 @@
     "react-countdown": "^2.3.5",
     "react-countdown-simple": "^1.0.12",
     "react-dom": "^18.1.0",
+    "react-ga": "^3.3.1",
     "react-router-dom": "^5.2.1",
     "react-scripts": "5.0.1",
     "reactjs-popup": "^2.0.5",
