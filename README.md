@@ -2,6 +2,8 @@
 
 This site helps you to execute the transactions using your wallet in your browser with a friendly UI removing all the complexities. Below is the process on how you can use it.
 
+You can also share the URL which has query params specifying module address, module name and the function to execute.
+
 ## Procedure
 
 1. Choose your network
