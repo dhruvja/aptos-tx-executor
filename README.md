@@ -27,6 +27,5 @@ You can also share the URL which has query params specifying module address, mod
 - Cannot enter arguments of type vector
 - Doesnt show resources
 - Doesnt show events
-- Shows all the functions instead of only entry functions ( cause non entry functions cannot be called using SDK or API ).
 
 The above features would be added soon.
